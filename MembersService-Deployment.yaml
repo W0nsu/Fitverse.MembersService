@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: membersservice-deployment
+  labels:
+    app: MembersService
+    name: membersservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:                          
+      app: MembersService
+
+ #-------------------------------> RollingUpdate definition
+  strategy:
+    type: RollingUpdate 
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 50%
+
+#-------------------------------> Blueprint for Pod
+  template:
+    metadata:
+      labels:
+        app: MembersService
+    spec:
+      containers:
+      - name: membersservice
+        image: crfitverse.azurecr.io/membersservice:$(Build.BuildId)
+        ports:
+        - containerPort: 5003
+        - name: health-port
+          containerPort: 80
+        resources:
+          requests:
+            cpu: "25m"
+            memory: "32Mi"
+          limits:
+            cpu: "50m"
+            memory: "64Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-service
+spec:
+  selector:
+    app: MembersService
+  ports:
+    - protocol: TCP
+      port: 83
+      targetPort: 5003
+
